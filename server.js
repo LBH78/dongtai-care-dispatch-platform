@@ -95,6 +95,11 @@ async function handleApi(request, response, url) {
       return;
     }
 
+    if (request.method === "GET" && url.pathname === "/api/health") {
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+
     if (request.method === "POST" && url.pathname === "/api/orders") {
       await createOrder(request, response);
       return;

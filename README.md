@@ -66,6 +66,28 @@ data/orders.json
 
 GitHub Pages 只能放靜態網頁，不能執行這個營運後端。正式營運請部署到可執行 Node.js 的主機，例如 Render、Railway、Fly.io、VPS、NAS 或自有伺服器。
 
+### Render 部署設定
+
+本專案已提供 `render.yaml`，可用 Render Blueprint 建立正式服務：
+
+- Service name: `dongtai-care-dispatch-platform`
+- Branch: `codex/production-backend`
+- Region: `singapore`
+- Runtime: Node
+- Build command: `npm install`
+- Start command: `npm start`
+- Health check path: `/api/health`
+- Persistent disk: `/var/data`
+- Data file: `/var/data/orders.json`
+
+Render 建立服務時請填入：
+
+```text
+ADMIN_PASSWORD=你的正式後台密碼
+```
+
+Render 的 Web Service 必須綁定 `0.0.0.0`，本專案已透過環境變數 `HOST=0.0.0.0` 設定。Render 也會提供 `PORT` 環境變數，伺服器會自動讀取。
+
 部署後，請把前台 QR Code 的連結設定成正式網址，例如：
 
 ```text
