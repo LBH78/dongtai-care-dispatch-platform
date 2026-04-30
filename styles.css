@@ -419,11 +419,38 @@ legend {
 
 .admin-hero,
 .admin-tools,
-.table-section {
+.table-section,
+.login-card {
   background: var(--paper);
   border: 1px solid var(--line);
   margin-bottom: 22px;
   padding: clamp(20px, 4vw, 32px);
+}
+
+.login-panel {
+  display: grid;
+  min-height: calc(100vh - 170px);
+  place-items: center;
+}
+
+.login-card {
+  margin: 0;
+  max-width: 440px;
+  width: 100%;
+}
+
+.login-card h2 {
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.2;
+  margin: 6px 0 22px;
+}
+
+.login-error {
+  background: #fff1f1;
+  border-left: 4px solid #b43b3b;
+  color: #7a1f1f;
+  line-height: 1.7;
+  padding: 12px;
 }
 
 .metric-grid {

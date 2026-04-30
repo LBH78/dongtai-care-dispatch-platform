@@ -1,6 +1,14 @@
 const ordersKey = "dongtai-care-orders";
+const adminSessionKey = "dongtai-admin-authenticated";
+const adminPasswordHash = "a2aa67ba7e9c6315881f6010b6ab2b3805a7254b5ecd297971698db00330cd23";
 const statusOptions = ["待付款", "已付款", "現場未收款", "已取消"];
 
+const loginPanel = document.querySelector("#loginPanel");
+const loginForm = document.querySelector("#loginForm");
+const adminPassword = document.querySelector("#adminPassword");
+const loginError = document.querySelector("#loginError");
+const adminContent = document.querySelector("#adminContent");
+const logoutAdmin = document.querySelector("#logoutAdmin");
 const totalOrders = document.querySelector("#totalOrders");
 const pendingOrders = document.querySelector("#pendingOrders");
 const paidOrders = document.querySelector("#paidOrders");
@@ -13,6 +21,31 @@ const exportCsv = document.querySelector("#exportCsv");
 
 function currency(value) {
   return `NT$${Number(value || 0).toLocaleString("zh-TW")}`;
+}
+
+async function sha256(value) {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function isAuthenticated() {
+  return sessionStorage.getItem(adminSessionKey) === "true";
+}
+
+async function requireLogin() {
+  if (!isAuthenticated()) {
+    loginPanel.hidden = false;
+    adminContent.hidden = true;
+    exportCsv.hidden = true;
+    logoutAdmin.hidden = true;
+    return;
+  }
+
+  loginPanel.hidden = true;
+  adminContent.hidden = false;
+  exportCsv.hidden = false;
+  logoutAdmin.hidden = false;
+  await renderTable();
 }
 
 function readLocalOrders() {
@@ -202,5 +235,26 @@ ordersBody.addEventListener("change", async (event) => {
 searchInput.addEventListener("input", renderTable);
 statusFilter.addEventListener("change", renderTable);
 exportCsv.addEventListener("click", downloadCsv);
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const passwordHash = await sha256(adminPassword.value);
 
-renderTable();
+  if (passwordHash !== adminPasswordHash) {
+    loginError.hidden = false;
+    adminPassword.value = "";
+    adminPassword.focus();
+    return;
+  }
+
+  sessionStorage.setItem(adminSessionKey, "true");
+  loginError.hidden = true;
+  adminPassword.value = "";
+  await requireLogin();
+});
+
+logoutAdmin.addEventListener("click", () => {
+  sessionStorage.removeItem(adminSessionKey);
+  requireLogin();
+});
+
+requireLogin();

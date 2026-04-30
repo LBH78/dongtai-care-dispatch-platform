@@ -14,11 +14,26 @@
       </div>
       <nav class="top-actions" aria-label="主要操作">
         <a class="ghost-button" href="index.html#booking">回登記頁</a>
-        <button class="ghost-button" id="exportCsv" type="button">匯出 CSV</button>
+        <button class="ghost-button" id="exportCsv" type="button" hidden>匯出 CSV</button>
+        <button class="ghost-button" id="logoutAdmin" type="button" hidden>登出</button>
       </nav>
     </header>
 
     <main>
+      <section class="login-panel" id="loginPanel" aria-labelledby="login-title">
+        <form class="login-card" id="loginForm">
+          <p class="eyebrow">後台登入</p>
+          <h2 id="login-title">請輸入管理員密碼</h2>
+          <label>
+            管理員密碼
+            <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="請輸入密碼">
+          </label>
+          <p class="login-error" id="loginError" hidden>密碼錯誤，請重新輸入。</p>
+          <button class="primary-button submit-button" type="submit">登入後台</button>
+        </form>
+      </section>
+
+      <div id="adminContent" hidden>
       <section class="admin-hero" aria-labelledby="admin-title">
         <div class="section-title">
           <p class="eyebrow">派遣申請總覽</p>
@@ -84,6 +99,7 @@
           </table>
         </div>
       </section>
+      </div>
     </main>
 
     <footer>
