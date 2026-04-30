@@ -1,2 +1,4 @@
 server-*.log
 server-*.err
+data/orders.json
+.env

@@ -35,44 +35,22 @@ const qrUrl = document.querySelector("#qrUrl");
 const qrTargetInput = document.querySelector("#qrTargetInput");
 const qrWarning = document.querySelector("#qrWarning");
 const printPoster = document.querySelector("#printPoster");
-const ordersKey = "dongtai-care-orders";
 const qrTargetKey = "dongtai-qr-target";
 
 function currency(value) {
   return `NT$${value.toLocaleString("zh-TW")}`;
 }
 
+function getSelectedPlanKey() {
+  return new FormData(form).get("plan") || "shared24";
+}
+
 function getSelectedPlan() {
-  const value = new FormData(form).get("plan");
-  return plans[value] || plans.shared24;
+  return plans[getSelectedPlanKey()] || plans.shared24;
 }
 
 function getSelectedPayment() {
   return new FormData(form).get("payment") || "ATM";
-}
-
-function readOrders() {
-  try {
-    return JSON.parse(localStorage.getItem(ordersKey)) || [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveOrder(order) {
-  const orders = readOrders();
-  orders.unshift(order);
-  localStorage.setItem(ordersKey, JSON.stringify(orders));
-
-  if (window.location.protocol.startsWith("http")) {
-    await fetch("/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(order)
-    });
-  }
 }
 
 function escapeHtml(value) {
@@ -105,27 +83,43 @@ function setupQrCode() {
 
   if (isFileMode && !savedTarget) {
     qrWarning.hidden = false;
-    qrWarning.textContent = "目前使用 file:// 開啟，手機掃描後無法讀取這台電腦的本機檔案。請輸入正式部署網址，或先用本機預覽網址測試。";
+    qrWarning.textContent = "目前使用 file:// 開啟，正式營運請使用伺服器網址。手機無法讀取電腦本機檔案。";
   } else {
     qrWarning.hidden = true;
   }
 }
 
-function buildOrder(data, plan, payment) {
-  const orderId = `DT${Date.now().toString().slice(-8)}`;
+function buildOrderPayload(data) {
   return {
-    id: orderId,
-    createdAt: new Date().toISOString(),
     name: data.get("name"),
     phone: data.get("phone"),
     floor: data.get("floor"),
     room: data.get("room"),
     note: data.get("note"),
-    planName: plan.name,
-    amount: plan.price,
-    paymentMethod: payment,
-    paymentStatus: payment === "現場付款" ? "現場未收款" : "待付款"
+    planKey: getSelectedPlanKey(),
+    paymentMethod: getSelectedPayment()
   };
+}
+
+async function saveOrder(payload) {
+  if (!window.location.protocol.startsWith("http")) {
+    throw new Error("請使用伺服器網址開啟，才能送出營運資料。");
+  }
+
+  const response = await fetch("/api/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.error || "送出失敗，請稍後再試。");
+  }
+
+  return response.json();
 }
 
 function buildReceipt(order) {
@@ -159,19 +153,16 @@ form.addEventListener("submit", async (event) => {
   }
 
   const data = new FormData(form);
-  const plan = getSelectedPlan();
-  const payment = getSelectedPayment();
-  const order = buildOrder(data, plan, payment);
   try {
-    await saveOrder(order);
-  } catch {
-    paymentNote.textContent = "後端暫時無法寫入，已先保存在此瀏覽器。請確認本機預覽伺服器是否啟動。";
+    const order = await saveOrder(buildOrderPayload(data));
+    receipt.hidden = false;
+    receipt.innerHTML = buildReceipt(order);
+    receipt.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    form.reset();
+    updateSummary();
+  } catch (error) {
+    paymentNote.textContent = error.message;
   }
-  receipt.hidden = false;
-  receipt.innerHTML = buildReceipt(order);
-  receipt.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  form.reset();
-  updateSummary();
 });
 
 function updateQrTargetFromInput() {

@@ -1,6 +1,3 @@
-const ordersKey = "dongtai-care-orders";
-const adminSessionKey = "dongtai-admin-authenticated";
-const adminPasswordHash = "a2aa67ba7e9c6315881f6010b6ab2b3805a7254b5ecd297971698db00330cd23";
 const statusOptions = ["待付款", "已付款", "現場未收款", "已取消"];
 
 const loginPanel = document.querySelector("#loginPanel");
@@ -23,17 +20,13 @@ function currency(value) {
   return `NT$${Number(value || 0).toLocaleString("zh-TW")}`;
 }
 
-async function sha256(value) {
-  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function isAuthenticated() {
-  return sessionStorage.getItem(adminSessionKey) === "true";
-}
-
 async function requireLogin() {
-  if (!isAuthenticated()) {
+  const response = await fetch("/api/admin/session", {
+    credentials: "same-origin"
+  });
+  const result = await response.json().catch(() => ({ authenticated: false }));
+
+  if (!result.authenticated) {
     loginPanel.hidden = false;
     adminContent.hidden = true;
     exportCsv.hidden = true;
@@ -48,27 +41,21 @@ async function requireLogin() {
   await renderTable();
 }
 
-function readLocalOrders() {
-  try {
-    return JSON.parse(localStorage.getItem(ordersKey)) || [];
-  } catch {
+async function fetchOrders() {
+  const response = await fetch("/api/orders", {
+    credentials: "same-origin"
+  });
+
+  if (response.status === 401) {
+    await requireLogin();
     return [];
   }
-}
 
-function writeLocalOrders(orders) {
-  localStorage.setItem(ordersKey, JSON.stringify(orders));
-}
-
-async function fetchOrders() {
-  if (window.location.protocol.startsWith("http")) {
-    const response = await fetch("/api/orders");
-    if (response.ok) {
-      return response.json();
-    }
+  if (!response.ok) {
+    throw new Error("無法讀取後台資料");
   }
 
-  return readLocalOrders();
+  return response.json();
 }
 
 function escapeHtml(value) {
@@ -133,86 +120,63 @@ function statusSelect(order) {
 }
 
 async function renderTable() {
-  const allOrders = await fetchOrders();
-  const filteredOrders = getFilteredOrders(allOrders);
-  renderMetrics(allOrders);
-  emptyState.hidden = allOrders.length > 0;
+  try {
+    const allOrders = await fetchOrders();
+    const filteredOrders = getFilteredOrders(allOrders);
+    renderMetrics(allOrders);
+    emptyState.hidden = allOrders.length > 0;
 
-  ordersBody.innerHTML = filteredOrders.map((order) => `
-    <tr>
-      <td>${escapeHtml(formatDate(order.createdAt))}</td>
-      <td><strong>${escapeHtml(order.id)}</strong></td>
-      <td>
-        <div class="admin-name">${escapeHtml(order.name)}</div>
-        <div class="admin-subtext">${escapeHtml(order.phone)}</div>
-      </td>
-      <td>${escapeHtml(order.floor)}<br>${escapeHtml(order.room)}</td>
-      <td>${escapeHtml(order.planName)}</td>
-      <td><strong>${currency(order.amount)}</strong></td>
-      <td>${escapeHtml(order.paymentMethod)}</td>
-      <td>${statusSelect(order)}</td>
-      <td>${escapeHtml(order.note || "無")}</td>
-    </tr>
-  `).join("");
+    ordersBody.innerHTML = filteredOrders.map((order) => `
+      <tr>
+        <td>${escapeHtml(formatDate(order.createdAt))}</td>
+        <td><strong>${escapeHtml(order.id)}</strong></td>
+        <td>
+          <div class="admin-name">${escapeHtml(order.name)}</div>
+          <div class="admin-subtext">${escapeHtml(order.phone)}</div>
+        </td>
+        <td>${escapeHtml(order.floor)}<br>${escapeHtml(order.room)}</td>
+        <td>${escapeHtml(order.planName)}</td>
+        <td><strong>${currency(order.amount)}</strong></td>
+        <td>${escapeHtml(order.paymentMethod)}</td>
+        <td>${statusSelect(order)}</td>
+        <td>${escapeHtml(order.note || "無")}</td>
+      </tr>
+    `).join("");
+  } catch (error) {
+    emptyState.hidden = false;
+    emptyState.textContent = error.message;
+  }
 }
 
 async function updatePaymentStatus(orderId, status) {
-  if (window.location.protocol.startsWith("http")) {
-    const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ paymentStatus: status })
-    });
-
-    if (response.ok) {
-      await renderTable();
-      return;
-    }
-  }
-
-  const orders = readLocalOrders().map((order) => {
-    if (order.id !== orderId) {
-      return order;
-    }
-
-    return {
-      ...order,
-      paymentStatus: status,
-      updatedAt: new Date().toISOString()
-    };
+  const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+    method: "PATCH",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ paymentStatus: status })
   });
 
-  writeLocalOrders(orders);
+  if (!response.ok) {
+    await requireLogin();
+    return;
+  }
+
   await renderTable();
 }
 
-function csvCell(value) {
-  return `"${String(value || "").replaceAll('"', '""')}"`;
-}
-
 async function downloadCsv() {
-  const orders = getFilteredOrders(await fetchOrders());
-  const rows = [
-    ["時間", "受理編號", "姓名", "電話", "樓層", "病房號碼", "照護方案", "金額", "付款方式", "付款狀態", "備註"],
-    ...orders.map((order) => [
-      formatDate(order.createdAt),
-      order.id,
-      order.name,
-      order.phone,
-      order.floor,
-      order.room,
-      order.planName,
-      order.amount,
-      order.paymentMethod,
-      order.paymentStatus,
-      order.note
-    ])
-  ];
+  const response = await fetch("/api/orders.csv", {
+    credentials: "same-origin"
+  });
 
-  const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
-  const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+  if (!response.ok) {
+    await requireLogin();
+    return;
+  }
+
+  const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -235,26 +199,36 @@ ordersBody.addEventListener("change", async (event) => {
 searchInput.addEventListener("input", renderTable);
 statusFilter.addEventListener("change", renderTable);
 exportCsv.addEventListener("click", downloadCsv);
+
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const passwordHash = await sha256(adminPassword.value);
+  const response = await fetch("/api/admin/login", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ password: adminPassword.value })
+  });
 
-  if (passwordHash !== adminPasswordHash) {
+  if (!response.ok) {
     loginError.hidden = false;
     adminPassword.value = "";
     adminPassword.focus();
     return;
   }
 
-  sessionStorage.setItem(adminSessionKey, "true");
   loginError.hidden = true;
   adminPassword.value = "";
   await requireLogin();
 });
 
-logoutAdmin.addEventListener("click", () => {
-  sessionStorage.removeItem(adminSessionKey);
-  requireLogin();
+logoutAdmin.addEventListener("click", async () => {
+  await fetch("/api/admin/logout", {
+    method: "POST",
+    credentials: "same-origin"
+  });
+  await requireLogin();
 });
 
 requireLogin();
