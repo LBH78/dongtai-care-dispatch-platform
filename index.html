@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>東泰照服勞動合作社 | 線上照服員派遣登記</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">醫院護理站 QR Code 快速登記</p>
+        <h1>東泰照服勞動合作社</h1>
+      </div>
+      <nav class="top-actions" aria-label="主要操作">
+        <a class="ghost-button" href="admin.html">管理後台</a>
+        <a class="ghost-button" href="#poster">列印 QR 碼</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="badge">24 小時線上受理</p>
+          <h2 id="hero-title">掃描 QR 碼，立即登記需要照服員</h2>
+          <p>
+            提供病房照護人力媒合、費用試算與付款方式選擇，適合張貼於各大醫院護理站與病房門口。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#booking">開始登記</a>
+            <a class="secondary-button" href="tel:0800000000">電話洽詢</a>
+          </div>
+        </div>
+        <div class="hero-panel" aria-label="服務價格摘要">
+          <div class="panel-head">
+            <span>照護模式</span>
+            <strong>費用</strong>
+          </div>
+          <div class="price-row">
+            <span>一對六照顧 24 小時</span>
+            <strong>NT$1,100</strong>
+          </div>
+          <div class="price-row">
+            <span>一對六照顧 12 小時</span>
+            <strong>NT$700</strong>
+          </div>
+          <div class="price-row">
+            <span>一對一專人照顧 24 小時</span>
+            <strong>NT$2,800</strong>
+          </div>
+          <div class="price-row">
+            <span>一對一專人照顧 12 小時</span>
+            <strong>NT$1,800</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="booking-layout" id="booking">
+        <form class="booking-form" id="bookingForm">
+          <div class="section-title">
+            <p class="eyebrow">線上登記</p>
+            <h2>填寫照服員需求</h2>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              姓名
+            <input name="name" autocomplete="name" required placeholder="請輸入姓名" data-testid="name-input">
+            </label>
+            <label>
+              電話
+              <input name="phone" autocomplete="tel" inputmode="tel" required placeholder="09xx-xxx-xxx" data-testid="phone-input">
+            </label>
+            <label>
+              樓層
+              <input name="floor" required placeholder="例如：8 樓" data-testid="floor-input">
+            </label>
+            <label>
+              病房號碼
+              <input name="room" required placeholder="例如：812-2" data-testid="room-input">
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>照護方案</legend>
+            <div class="option-grid" id="careOptions">
+              <label class="option-card">
+                <input type="radio" name="plan" value="shared24" checked>
+                <span>
+                  <strong>一對六照顧</strong>
+                  <small>24 小時</small>
+                </span>
+                <b>NT$1,100</b>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="plan" value="shared12">
+                <span>
+                  <strong>一對六照顧</strong>
+                  <small>12 小時</small>
+                </span>
+                <b>NT$700</b>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="plan" value="private24">
+                <span>
+                  <strong>一對一專人照顧</strong>
+                  <small>24 小時</small>
+                </span>
+                <b>NT$2,800</b>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="plan" value="private12">
+                <span>
+                  <strong>一對一專人照顧</strong>
+                  <small>12 小時</small>
+                </span>
+                <b>NT$1,800</b>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>付款方式</legend>
+            <div class="payment-grid">
+              <label><input type="radio" name="payment" value="ATM" checked> ATM 轉帳</label>
+              <label><input type="radio" name="payment" value="信用卡"> 信用卡</label>
+              <label><input type="radio" name="payment" value="LINE Pay"> LINE Pay</label>
+              <label><input type="radio" name="payment" value="現場付款"> 現場付款</label>
+            </div>
+          </fieldset>
+
+          <label>
+            備註
+            <textarea name="note" rows="4" placeholder="可填寫開始時間、特殊照護需求或聯絡補充資訊"></textarea>
+          </label>
+
+          <label class="consent">
+            <input type="checkbox" name="consent" required>
+            <span>我同意東泰照服勞動合作社為派遣照服員與聯繫付款用途使用上述資料。</span>
+          </label>
+
+          <button class="primary-button submit-button" type="submit" data-testid="submit-booking">送出登記</button>
+        </form>
+
+        <aside class="summary-card" aria-live="polite">
+          <p class="eyebrow">費用試算</p>
+          <h2 id="summaryPlan">一對六照顧 24 小時</h2>
+          <div class="summary-total" id="summaryPrice">NT$1,100</div>
+          <p id="summaryPayment">付款方式：ATM 轉帳</p>
+          <div class="payment-note" id="paymentNote">
+            ATM 轉帳資料會於送出後顯示，請保留末五碼方便對帳。
+          </div>
+          <div class="receipt" id="receipt" hidden></div>
+        </aside>
+      </section>
+
+      <section class="poster-section" id="poster">
+        <div class="section-title">
+          <p class="eyebrow">護理站張貼用</p>
+          <h2>QR 碼海報</h2>
+        </div>
+        <div class="poster">
+          <div>
+            <p class="poster-kicker">需要照服員？</p>
+            <h3>掃描 QR 碼線上登記</h3>
+            <p>填寫姓名、電話、樓層、病房號碼，選擇照護方案與付款方式。</p>
+            <label class="qr-control">
+              QR 碼連結網址
+              <input id="qrTargetInput" type="text" placeholder="請輸入正式上線網址，例如 https://example.com/#booking">
+            </label>
+            <p class="qr-warning" id="qrWarning" hidden></p>
+            <button class="secondary-button" id="printPoster" type="button">列印海報</button>
+          </div>
+          <div class="qr-wrap">
+            <img id="qrImage" alt="線上登記 QR Code">
+            <small id="qrUrl"></small>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <strong>東泰照服勞動合作社</strong>
+      <span>照服員派遣登記平台</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>東泰照服勞動合作社 | 管理後台</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">管理人員後台</p>
+        <h1>東泰照服勞動合作社</h1>
+      </div>
+      <nav class="top-actions" aria-label="主要操作">
+        <a class="ghost-button" href="index.html#booking">回登記頁</a>
+        <button class="ghost-button" id="exportCsv" type="button">匯出 CSV</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="admin-hero" aria-labelledby="admin-title">
+        <div class="section-title">
+          <p class="eyebrow">派遣申請總覽</p>
+          <h2 id="admin-title">登記資料與付款資訊</h2>
+        </div>
+        <div class="metric-grid">
+          <div class="metric">
+            <span>總筆數</span>
+            <strong id="totalOrders">0</strong>
+          </div>
+          <div class="metric">
+            <span>待付款</span>
+            <strong id="pendingOrders">0</strong>
+          </div>
+          <div class="metric">
+            <span>已付款</span>
+            <strong id="paidOrders">0</strong>
+          </div>
+          <div class="metric">
+            <span>總金額</span>
+            <strong id="totalAmount">NT$0</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-tools" aria-label="資料篩選">
+        <label>
+          搜尋姓名、電話、病房或受理編號
+          <input id="searchInput" type="search" placeholder="輸入關鍵字">
+        </label>
+        <label>
+          付款狀態
+          <select id="statusFilter">
+            <option value="all">全部</option>
+            <option value="待付款">待付款</option>
+            <option value="已付款">已付款</option>
+            <option value="現場未收款">現場未收款</option>
+            <option value="已取消">已取消</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="table-section" aria-label="登記資料表">
+        <div class="empty-state" id="emptyState">
+          目前尚無登記資料。請先從前台送出一筆測試資料。
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table" id="ordersTable">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>受理編號</th>
+                <th>使用者資料</th>
+                <th>病房位置</th>
+                <th>照護方案</th>
+                <th>金額</th>
+                <th>付款方式</th>
+                <th>付款狀態</th>
+                <th>備註</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <strong>東泰照服勞動合作社</strong>
+      <span>管理後台</span>
+    </footer>
+
+    <script src="admin.js"></script>
+  </body>
+</html>
