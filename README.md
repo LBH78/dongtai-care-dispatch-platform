@@ -40,7 +40,7 @@ http://127.0.0.1:5175/admin.html
 預設管理員密碼：
 
 ```text
-dongtai2026
+720725
 ```
 
 ## 正式營運設定
@@ -48,7 +48,7 @@ dongtai2026
 正式上線時請設定環境變數，不要使用預設密碼：
 
 ```text
-ADMIN_PASSWORD=請改成正式後台密碼
+ADMIN_PASSWORD=720725
 HOST=0.0.0.0
 PORT=平台指定的連接埠
 DATA_DIR=./data
