@@ -4,7 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const port = Number(process.env.PORT || process.argv[2] || 5173);
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || (process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
 const root = __dirname;
 const dataDir = process.env.DATA_DIR || path.join(root, "data");
 const ordersFile = path.join(dataDir, "orders.json");
