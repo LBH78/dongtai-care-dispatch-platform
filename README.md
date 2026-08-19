@@ -94,6 +94,12 @@ Render 的 Web Service 必須綁定 `0.0.0.0`，本專案已透過環境變數 `
 https://你的網域/index.html#booking
 ```
 
+## 常見問題
+
+如果後台顯示「這個網址沒有連接營運後端」，代表目前開到的是 GitHub Pages、`file://` 檔案，或沒有 Node.js API 的網址。正式營運後台必須使用 Render / Node.js 主機提供的網址。
+
+如果密碼正確但登入後又回到登入畫面，請確認主機有使用 HTTPS，或確認反向代理有傳遞 `x-forwarded-proto: https`。本專案會依實際 HTTPS 狀態設定登入 cookie。
+
 ## 金流預留
 
 目前已保留欄位：

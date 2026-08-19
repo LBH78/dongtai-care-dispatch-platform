@@ -106,20 +106,29 @@ async function saveOrder(payload) {
     throw new Error("請使用伺服器網址開啟，才能送出營運資料。");
   }
 
-  const response = await fetch("/api/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+  let response;
+  try {
+    response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch {
+    throw new Error("目前連不到營運後端，請確認是用正式 Node.js 網址開啟。");
+  }
 
   if (!response.ok) {
     const result = await response.json().catch(() => ({}));
-    throw new Error(result.error || "送出失敗，請稍後再試。");
+    throw new Error(result.error || "這個網址尚未連接營運後端，請改用正式 Node.js 網址。");
   }
 
-  return response.json();
+  try {
+    return await response.json();
+  } catch {
+    throw new Error("營運後端回傳格式不正確，請通知管理員檢查主機。");
+  }
 }
 
 function buildReceipt(order) {

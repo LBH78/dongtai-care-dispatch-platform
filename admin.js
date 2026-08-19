@@ -4,6 +4,7 @@ const loginPanel = document.querySelector("#loginPanel");
 const loginForm = document.querySelector("#loginForm");
 const adminPassword = document.querySelector("#adminPassword");
 const loginError = document.querySelector("#loginError");
+const backendError = document.querySelector("#backendError");
 const adminContent = document.querySelector("#adminContent");
 const logoutAdmin = document.querySelector("#logoutAdmin");
 const totalOrders = document.querySelector("#totalOrders");
@@ -20,11 +21,49 @@ function currency(value) {
   return `NT$${Number(value || 0).toLocaleString("zh-TW")}`;
 }
 
+function setBackendError(message) {
+  backendError.textContent = message;
+  backendError.hidden = !message;
+}
+
+async function apiFetch(path, options = {}) {
+  try {
+    const response = await fetch(path, {
+      credentials: "same-origin",
+      ...options,
+      headers: {
+        ...(options.headers || {})
+      }
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
+    const body = isJson ? await response.json().catch(() => null) : null;
+
+    if (!isJson && path.startsWith("/api/")) {
+      throw new Error("這個網址沒有連接營運後端，請改用 Render / Node.js 正式網址登入後台。");
+    }
+
+    return { response, body };
+  } catch (error) {
+    throw new Error(error.message || "目前連不到營運後端，請確認主機是否已部署完成。");
+  }
+}
+
 async function requireLogin() {
-  const response = await fetch("/api/admin/session", {
-    credentials: "same-origin"
-  });
-  const result = await response.json().catch(() => ({ authenticated: false }));
+  let result;
+  try {
+    const session = await apiFetch("/api/admin/session");
+    result = session.body || { authenticated: false };
+    setBackendError("");
+  } catch (error) {
+    loginPanel.hidden = false;
+    adminContent.hidden = true;
+    exportCsv.hidden = true;
+    logoutAdmin.hidden = true;
+    setBackendError(error.message);
+    return;
+  }
 
   if (!result.authenticated) {
     loginPanel.hidden = false;
@@ -42,9 +81,7 @@ async function requireLogin() {
 }
 
 async function fetchOrders() {
-  const response = await fetch("/api/orders", {
-    credentials: "same-origin"
-  });
+  const { response, body } = await apiFetch("/api/orders");
 
   if (response.status === 401) {
     await requireLogin();
@@ -52,10 +89,10 @@ async function fetchOrders() {
   }
 
   if (!response.ok) {
-    throw new Error("無法讀取後台資料");
+    throw new Error(body?.error || "無法讀取後台資料");
   }
 
-  return response.json();
+  return body || [];
 }
 
 function escapeHtml(value) {
@@ -149,9 +186,8 @@ async function renderTable() {
 }
 
 async function updatePaymentStatus(orderId, status) {
-  const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+  const { response } = await apiFetch(`/api/orders/${encodeURIComponent(orderId)}`, {
     method: "PATCH",
-    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json"
     },
@@ -167,9 +203,7 @@ async function updatePaymentStatus(orderId, status) {
 }
 
 async function downloadCsv() {
-  const response = await fetch("/api/orders.csv", {
-    credentials: "same-origin"
-  });
+  const response = await fetch("/api/orders.csv", { credentials: "same-origin" });
 
   if (!response.ok) {
     await requireLogin();
@@ -202,17 +236,26 @@ exportCsv.addEventListener("click", downloadCsv);
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const response = await fetch("/api/admin/login", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ password: adminPassword.value })
-  });
+  let response;
+  try {
+    const result = await apiFetch("/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ password: adminPassword.value })
+    });
+    response = result.response;
+    setBackendError("");
+  } catch (error) {
+    loginError.hidden = true;
+    setBackendError(error.message);
+    return;
+  }
 
   if (!response.ok) {
     loginError.hidden = false;
+    setBackendError("");
     adminPassword.value = "";
     adminPassword.focus();
     return;
@@ -224,10 +267,7 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 logoutAdmin.addEventListener("click", async () => {
-  await fetch("/api/admin/logout", {
-    method: "POST",
-    credentials: "same-origin"
-  });
+  await apiFetch("/api/admin/logout", { method: "POST" }).catch(() => null);
   await requireLogin();
 });
 

@@ -341,9 +341,7 @@ function getCookie(request, name) {
 
 function buildSessionCookie(token, request) {
   const forwardedProto = request.headers["x-forwarded-proto"];
-  const hostHeader = request.headers.host || "";
-  const isLocalHost = hostHeader.startsWith("localhost") || hostHeader.startsWith("127.0.0.1");
-  const secure = forwardedProto === "https" || (!isLocalHost && forwardedProto !== "http");
+  const secure = forwardedProto === "https" || request.socket.encrypted === true;
   const secureFlag = secure ? "; Secure" : "";
   return `${sessionCookieName}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Max-Age=${sessionMaxAgeSeconds}; Path=/${secureFlag}`;
 }
